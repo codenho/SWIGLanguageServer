@@ -1,0 +1,91 @@
+{
+  "scopeName": "source.swig",
+  "patterns": [
+    {
+      "name": "keyword.control.swig",
+      "match": "\\b(%module|%include|%define|%typemap|%pragma|%extend|%apply|%exception|%feature|%rename|%ignore|%template|%insert|%warn|%newobject|%shared_ptr|%perlcode)\\b"
+    },
+    {
+      "name": "keyword.control.c",
+      "match": "\\b(class|struct|namespace|include|define|if|else|for|while|switch|case|default)\\b"
+    },
+    {
+      "name": "include.block.swig",
+      "begin": "%\\{",
+      "end": "%\\}",
+      "patterns": [
+        {
+          "name": "meta.preprocessor.include.swig",
+          "begin": "(#include)\\s+",
+          "beginCaptures": {
+            "1": { "name": "keyword.directive.include.swig" }
+          },
+          "end": "(\"[^\"]+\"|<[^>]+>)",
+          "endCaptures": {
+            "1": { "name": "string.include.filename.swig" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "comment.line.double-slash.swig",
+      "begin": "//",
+      "end": "$"
+    },
+    {
+      "name": "comment.block.swig",
+      "begin": "/\\*",
+      "end": "\\*/"
+    },
+    {
+      "name": "string.quoted.double.swig",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.swig",
+          "match": "\\\\."
+        }
+      ]
+    },
+    {
+      "name": "string.quoted.single.swig",
+      "begin": "'",
+      "end": "'",
+      "patterns": [
+        {
+          "name": "constant.character.escape.swig",
+          "match": "\\\\."
+        }
+      ]
+    },
+    {
+      "name": "constant.numeric.swig",
+      "match": "\\b\\d+(\\.\\d+)?(e[+-]?\\d+)?\\b"
+    },
+    {
+      "name": "entity.name.function.swig",
+      "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\s*\\("
+    },
+    {
+      "name": "storage.type.swig",
+      "match": "\\b(void|int|float|double|char|bool|short|long|unsigned|signed|const|static|virtual|inline)\\b"
+    },
+    {
+      "name": "variable.parameter.swig",
+      "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+    },
+    {
+      "name": "punctuation.definition.directive.swig",
+      "match": "#[A-Za-z_][A-Za-z0-9_]*"
+    },
+    {
+      "name": "support.function.swig",
+      "match": "\\b(swig_add|swig_remove|swig_cast|swig_type|swig_ptr|swig_ref|swig_delete)\\b"
+    }
+  ],
+  "repository": {},
+  "fileTypes": ["i"],
+  "name": "SWIG",
+  "uuid": "123e4567-e89b-12d3-a456-426614174000"
+}

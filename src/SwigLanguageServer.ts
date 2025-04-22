@@ -4,6 +4,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { loadWASM, OnigScanner, OnigString } from 'vscode-oniguruma';
 
+interface ExtendedToken extends vscodeTextmate.IToken {
+    line: number;
+    type: number;
+}
+
 class SwigLanguageServer {
     private grammar: vscodeTextmate.IGrammar | null = null;
     private grammarLoaded: Promise<void>;
@@ -44,7 +49,8 @@ class SwigLanguageServer {
         this.grammar = await registry.loadGrammar('source.swig');
     }
 
-    public async tokenizeDocument(document: vscode.TextDocument): Promise<vscodeTextmate.IToken[]> {
+    
+    public async tokenizeDocument(document: vscode.TextDocument): Promise<ExtendedToken[]> {
         await this.grammarLoaded; // Ensure grammar is loaded
 
         if (!this.grammar) {
@@ -52,9 +58,6 @@ class SwigLanguageServer {
         }
 
         const lines = document.getText().split('\n');
-        interface ExtendedToken extends vscodeTextmate.IToken {
-            line: number;
-        }
 
         const tokens: ExtendedToken[] = [];
 
@@ -64,6 +67,7 @@ class SwigLanguageServer {
                 tokens.push({
                     ...token,
                     line: lineNumber,
+                    type: token.scopes.length, // Use the number of scopes as the type
                 } as ExtendedToken);
             });
         });

@@ -106,15 +106,18 @@ export function validateTextDocument(document: TextDocument): vscode.Diagnostic[
     // Check for keyword.control.swig after an include block
     if (!insideIncludeBlock && includeInitialized) {
       if (/^(%module|%define|%typemap|%pragma|%extend|%apply|%exception|%feature|%rename|%ignore|%insert|%warn|%newobject|%shared_ptr)/.test(line)) {
-        diagnostics.push({
-          severity: vscode.DiagnosticSeverity.Error,
-          range: new vscode.Range(
-            new vscode.Position(index, 0),
-            new vscode.Position(index, line.length)
-          ),
-          message: `SWIG control keyword constructs (e.g., %include) must be declared before include blocks (%{ #include ... %}).`,
-          source: 'swig.tmLanguage.json'
-        });
+        
+        if (!diagnostics.some(diagnostic => diagnostic.message.includes('SWIG control keyword constructs'))) {
+          diagnostics.push({
+            severity: vscode.DiagnosticSeverity.Error,
+            range: new vscode.Range(
+              new vscode.Position(index, 0),
+              new vscode.Position(index, line.length)
+            ),
+            message: `SWIG control keyword constructs (e.g., %include) must be declared before include blocks (%{ #include ... %}).`,
+            source: 'swig.tmLanguage.json'
+          });
+        }
       }
     }
 
@@ -151,27 +154,18 @@ export function validateTextDocument(document: TextDocument): vscode.Diagnostic[
       !validTypes.has(undefinedTypeMatch[1]) &&
       !(keywordPattern && keywordPattern.test(undefinedTypeMatch[1]))
     ) {
-      const existingDiagnostic = diagnostics.find(diagnostic => 
-        diagnostic.message === `Undefined type: ${undefinedTypeMatch[1]}`
-      );
-      if (!existingDiagnostic) {
+      
         diagnostics.push({
           severity: vscode.DiagnosticSeverity.Error,
           range: new vscode.Range(
-        new vscode.Position(index, 0),
-        new vscode.Position(index, line.length)
+            new vscode.Position(index, 0),
+            new vscode.Position(index, line.length)
           ),
           message: `Undefined type: ${undefinedTypeMatch[1]}`,
           source: 'swig.tmLanguage.json'
         });
-      }
-    }
+        }
   });
 
-
-
-  const diagnosticCollection = vscode.languages.createDiagnosticCollection('swig');
-  const uri = vscode.Uri.parse(document.uri);
-  diagnosticCollection.set(uri, diagnostics);
   return diagnostics;
 }

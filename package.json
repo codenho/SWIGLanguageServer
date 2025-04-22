@@ -3,6 +3,7 @@
   "displayName": "SWIG Language Server",
   "description": "Language server and linter for SWIG (Simplified Interface Wrapper Generator)",
   "version": "0.0.1",
+  "publisher": "UdhavVerma",
   "engines": {
     "vscode": "^1.99.0"
   },
@@ -19,7 +20,7 @@
       },
       {
         "command": "swig-language-server.tokenize",
-        "title": "Tokenize SWIG"
+        "title": "Manually tokenize SWIG interface"
       }
     ],
     "languages": [
@@ -71,8 +72,15 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
-    "onigasm": "^2.2.5",
     "vscode-languageclient": "^9.0.1",
     "vscode-oniguruma": "^2.0.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codenho/SWIGLanguageServer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/codenho/SWIGLanguageServer/issues"
+  },
+  "homepage": "https://github.com/codenho/SWIGLanguageServer#readme"
 }

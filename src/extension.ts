@@ -13,8 +13,14 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(vscode.languages.registerDocumentSemanticTokensProvider(
     { language: 'swig', scheme: 'file' },
     {
-      provideDocumentSemanticTokens(document) {
-        return null; // Replace with actual token provider logic if needed
+      provideDocumentSemanticTokens(document, token) {
+        return server.tokenizeDocument(document).then(tokens => {
+          const builder = new vscode.SemanticTokensBuilder();
+          tokens.forEach(token => {
+            builder.push(token.line, token.startIndex, token.endIndex - token.startIndex, token.type);
+          });
+          return builder.build();
+        });
       }
     },
     new vscode.SemanticTokensLegend(['type'], ['modifier'])
@@ -67,32 +73,25 @@ export function activate(context: vscode.ExtensionContext) {
     ]
   }));
 
+// Create a single diagnostic collection for SWIG diagnostics
+const diagnosticCollection = vscode.languages.createDiagnosticCollection('swig');
+context.subscriptions.push(diagnosticCollection);
 const fileLint = vscode.commands.registerCommand('swig-language-server.swigValidate', async () => {
   
   const editor = vscode.window.activeTextEditor;
   if (editor) {
-    const document = editor.document;
+    const document = editor.document; 
     vscode.window.showInformationMessage(`Linting SWIG interface file: ${document.fileName}`);
     if (document.languageId === 'swig') {
+      diagnosticCollection.delete(document.uri); // Clear previous diagnostics
       const convertedDocument = TextDocument.create(
         document.uri.toString(),
         document.languageId,
         document.version,
         document.getText()
       );
-      const rawResults: vscode.Diagnostic[] = await validateTextDocument(convertedDocument);
-      const results = rawResults.map((diagnostic) => ({
-        messages: [{
-          message: diagnostic.message,
-          line: diagnostic.range.start.line,
-          column: diagnostic.range.start.character
-        }]
-      }));
-      results.forEach((result) => {
-        result.messages.forEach((message) => {
-          vscode.window.showErrorMessage(`${message.message} (Line: ${message.line}, Column: ${message.column})`);
-        });
-      });
+      const diagnostics = await validateTextDocument(convertedDocument);
+      diagnosticCollection.set(document.uri, diagnostics);
     } else {
       vscode.window.showErrorMessage('The active file is not a SWIG file.');
     }
@@ -109,7 +108,6 @@ const server = new SwigLanguageServer();
     vscode.workspace.onDidOpenTextDocument(async (document) => {
         if (document.languageId === 'swig') {
             const tokens = await server.tokenizeDocument(document);
-            console.log('Tokens:', tokens);
             const outputChannel = vscode.window.createOutputChannel('Tokenized Tokens');
             outputChannel.appendLine('Tokens:');
             tokens.forEach(token => outputChannel.appendLine(JSON.stringify(token)));
@@ -122,9 +120,10 @@ const server = new SwigLanguageServer();
         const document = event.document;
         if (document.languageId === 'swig') {
             const tokens = server.tokenizeDocument(document);
-            console.log('Updated Tokens:', tokens);
+            vscode.commands.executeCommand('swig-language-server.swigValidate', document);
         }
     });
+
 
     // Register a command to manually tokenize the current document
     const disposable = vscode.commands.registerCommand('swig-language-server.tokenize', async () => {

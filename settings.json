@@ -1,0 +1,4 @@
+{
+    "swig-language-server.enable": true,
+    "swig-language-server.lintOnSave": true
+}

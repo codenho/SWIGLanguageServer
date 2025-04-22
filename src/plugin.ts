@@ -57,6 +57,7 @@ export function validateTextDocument(document: TextDocument): vscode.Diagnostic[
 
   lines.forEach((line, index) => {
     line = line.trim();
+  
     // Skip empty lines
     if (line === '') {
       return;
@@ -65,6 +66,23 @@ export function validateTextDocument(document: TextDocument): vscode.Diagnostic[
     if (lineCommentPattern && lineCommentPattern.test(line)) {
       return;
     }
+
+    // Check for unmatched single or double quotes
+    const singleQuoteCount = (line.match(/'/g) || []).length;
+    const doubleQuoteCount = (line.match(/"/g) || []).length;
+    if (singleQuoteCount % 2 !== 0 || doubleQuoteCount % 2 !== 0) {
+      diagnostics.push({
+        severity: vscode.DiagnosticSeverity.Error,
+        range: new vscode.Range(
+          new vscode.Position(index, 0),
+          new vscode.Position(index, line.length)
+        ),
+        message: `Unmatched single or double quotes detected.`,
+        source: 'swig.tmLanguage.json'
+      });
+      return;
+    }
+
     if (blockCommentStartPattern && blockCommentStartPattern.test(line)) {
       insideBlockComment = true;
     }
@@ -113,13 +131,26 @@ export function validateTextDocument(document: TextDocument): vscode.Diagnostic[
       });
     }
 
-    const typeMatch = line.match(/typedef\s+\w+\s+(\w+)/);
+    const typeMatch = line.startsWith('typedef') ? line.match(/typedef\s+.*?\b(\w+)\s*;$/) : null;
     if (typeMatch) {
       declaredTypes.add(typeMatch[1]);
+      return;
     }
 
+    // Handle SWIG directives explicitly
+    const swigDirectiveMatch = line.match(/^%(\w+)\b/);
+    if (swigDirectiveMatch) {
+      // If it's a SWIG directive, skip undefined type checks
+      return;
+    }
+    
     const undefinedTypeMatch = line.match(/\b(\w+)\b/);
-    if (undefinedTypeMatch && !declaredTypes.has(undefinedTypeMatch[1]) && !validTypes.has(undefinedTypeMatch[1])) {
+    if (
+      undefinedTypeMatch &&
+      !declaredTypes.has(undefinedTypeMatch[1]) &&
+      !validTypes.has(undefinedTypeMatch[1]) &&
+      !(keywordPattern && keywordPattern.test(undefinedTypeMatch[1]))
+    ) {
       const existingDiagnostic = diagnostics.find(diagnostic => 
         diagnostic.message === `Undefined type: ${undefinedTypeMatch[1]}`
       );
@@ -136,6 +167,8 @@ export function validateTextDocument(document: TextDocument): vscode.Diagnostic[
       }
     }
   });
+
+
 
   const diagnosticCollection = vscode.languages.createDiagnosticCollection('swig');
   const uri = vscode.Uri.parse(document.uri);

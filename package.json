@@ -1,6 +1,6 @@
 {
   "name": "swig-language-server",
-  "displayName": "swig-language-server",
+  "displayName": "SWIG Language Server",
   "description": "Language server and linter for SWIG (Simplified Interface Wrapper Generator)",
   "version": "0.0.1",
   "engines": {
@@ -13,10 +13,6 @@
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "swig-language-server.helloWorld",
-        "title": "Hello World"
-      },
       {
         "command": "swig-language-server.swigValidate",
         "title": "Validate SWIG interface file"
@@ -76,6 +72,7 @@
   },
   "dependencies": {
     "onigasm": "^2.2.5",
+    "vscode-languageclient": "^9.0.1",
     "vscode-oniguruma": "^2.0.1"
   }
 }

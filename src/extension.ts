@@ -1,8 +1,11 @@
 import * as vscode from 'vscode';
 import { validateTextDocument } from './plugin';
-import { SwigParser } from './SwigParser'; // Import SwigParser from the appropriate module
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SwigLanguageServer } from './SwigLanguageServer';
+import { LanguageClientOptions } from 'vscode-languageclient';
+import { LanguageClient } from 'vscode-languageclient/node';
+import { TransportKind } from 'vscode-languageclient/node';
+import { ServerOptions } from 'vscode-languageclient/node';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -63,28 +66,6 @@ export function activate(context: vscode.ExtensionContext) {
       }
     ]
   }));
-// Register the 'swig lint' command
-const lintCommand = vscode.commands.registerCommand('swig-language-server.helloWorld', async () => {
-	const editor = vscode.window.activeTextEditor;
-	if (editor) {
-		const document = editor.document;
-		if (document.languageId === 'swig') {
-			vscode.window.showInformationMessage(`Linting file: ${document.fileName}`);
-      const parser = new SwigParser();
-      // const tokens = parser.tokenize(document.getText());
-      const parsedDocument = parser.parse(document.getText());
-      console.log("will display results now"); // Output the parsed document
-      // console.log(parsedDocument); // Output the parsed document
-      // console.log(parsedDocument.getAllTokens()); // Output: ["const std::string& {std::string* }"]
-		} else {
-			vscode.window.showErrorMessage('The active file is not a Swig file.');
-		}
-	} else {
-		vscode.window.showErrorMessage('No active editor found.');
-	}
-});
-
-context.subscriptions.push(lintCommand);
 
 const fileLint = vscode.commands.registerCommand('swig-language-server.swigValidate', async () => {
   
@@ -162,6 +143,42 @@ const server = new SwigLanguageServer();
     });
 
     context.subscriptions.push(disposable);
+    const serverOptions: ServerOptions = {
+      run: { module: context.asAbsolutePath('server.js'), transport: TransportKind.ipc },
+      debug: { module: context.asAbsolutePath('server.js'), transport: TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6009'] } }
+    };
+
+    const clientOptions: LanguageClientOptions = {
+      documentSelector: [{ scheme: 'file', language: 'swig' }],
+      synchronize: {
+        fileEvents: vscode.workspace.createFileSystemWatcher('**/*.swig')
+      }
+    };
+
+    const client = new LanguageClient(
+      'swigLanguageServer',
+      'Swig Language Server',
+      serverOptions,
+      clientOptions
+    );
+
+    context.subscriptions.push({
+        dispose: () => {
+            if (client && client.needsStop()) {
+                client.stop();
+            }
+        }
+    });
+    try {
+      client.start();
+    } catch (error) {
+        if (error instanceof Error) {
+            vscode.window.showErrorMessage(`Failed to start Swig Language Server: ${error.message}`);
+        } else {
+            vscode.window.showErrorMessage('Failed to start Swig Language Server: Unknown error');
+        }
+        console.error('Swig Language Server start error:', error);
+    }
 }
 export function deactivate() {
   // Clean up resources if needed

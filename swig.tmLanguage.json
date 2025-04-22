@@ -3,7 +3,18 @@
   "patterns": [
     {
       "name": "keyword.control.swig",
-      "match": "\\b(%module|%include|%define|%typemap|%pragma|%extend|%apply|%exception|%feature|%rename|%ignore|%template|%insert|%warn|%newobject|%shared_ptr|%perlcode)\\b"
+      "begin": "^\\s*(%module|%include|%define|%typemap|%pragma|%extend|%apply|%exception|%feature|%rename|%ignore|%template|%insert|%warn|%newobject|%shared_ptr)\\b",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.swig" }
+      },
+      "end": "(?=$|\\n)",
+      "patterns": [
+        {
+          "name": "string.argument.swig",
+          "match": "\\s+.*",
+          "end": ";"
+        }
+      ]
     },
     {
       "name": "keyword.control.c",
@@ -16,14 +27,11 @@
       "patterns": [
         {
           "name": "meta.preprocessor.include.swig",
-          "begin": "(#include)\\s+",
-          "beginCaptures": {
-            "1": { "name": "keyword.directive.include.swig" }
-          },
-          "end": "(\"[^\"]+\"|<[^>]+>)",
-          "endCaptures": {
-            "1": { "name": "string.include.filename.swig" }
-          }
+          "match": "#include\\s+\"[^\"]+\""
+        },
+        {
+          "name": "meta.preprocessor.include.angle.swig",
+          "match": "#include\\s+<[^>]+>"
         }
       ]
     },

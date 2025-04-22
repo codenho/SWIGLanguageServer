@@ -68,21 +68,6 @@ class SwigLanguageServer {
             });
         });
 
-        for (let i = 0; i < tokens.length; i++) {
-            const token = tokens[i];
-            if (
-            token.scopes.includes('keyword.control.swig') &&
-            tokens.some(
-                (t, index) =>
-                index < i && t.scopes.includes('include.block.swig')
-            )
-            ) {
-            throw new Error(
-                `Invalid token order: 'keyword.control.swig' found after 'include.block.swig' on line ${token.line + 1}`
-            );
-            }
-        }
-
         return tokens;
     }
 }

@@ -1,0 +1,11 @@
+{
+    "languages": [
+      {
+        "id": "swig",
+        "extensions": [".i", ".swig"],
+        "aliases": ["SWIG"],
+        "configuration": "./language-configuration.json"
+      }
+    ]
+  }
+  

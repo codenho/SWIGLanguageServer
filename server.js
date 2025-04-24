@@ -29,10 +29,17 @@ connection.onHover((params) => {
     const lines = text.split('\n');
     const line = lines[params.position.line];
 
-    // Example hover logic for SWIG directives
-    const swigDirectiveMatch = line.match(/^%(\w+)/);
-    if (swigDirectiveMatch) {
-        const directive = swigDirectiveMatch[1];
+    // Find the word under the cursor
+    const wordRange = getWordRangeAtPosition(line, params.position.character);
+    if (!wordRange) {
+        return null;
+    }
+
+    const word = line.substring(wordRange.start, wordRange.end);
+
+    // Match SWIG directives
+    if (word.startsWith('%')) {
+        const directive = word.substring(1); // Remove the '%' prefix
         const hoverText = getHoverTextForDirective(directive);
         if (hoverText) {
             return {
@@ -43,6 +50,18 @@ connection.onHover((params) => {
 
     return null;
 });
+
+// Helper function to get the range of the word under the cursor
+function getWordRangeAtPosition(line, character) {
+    const regex = /%?\w+/g;
+    let match;
+    while ((match = regex.exec(line)) !== null) {
+        if (character >= match.index && character <= match.index + match[0].length) {
+            return { start: match.index, end: match.index + match[0].length };
+        }
+    }
+    return null;
+}
 
 connection.onDocumentSymbol((params) => {
     const document = documents.get(params.textDocument.uri);

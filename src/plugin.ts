@@ -106,18 +106,15 @@ export function validateTextDocument(document: TextDocument): vscode.Diagnostic[
     // Check for keyword.control.swig after an include block
     if (!insideIncludeBlock && includeInitialized) {
       if (/^(%module|%define|%typemap|%pragma|%extend|%apply|%exception|%feature|%rename|%ignore|%insert|%warn|%newobject|%shared_ptr)/.test(line)) {
-        
-        if (!diagnostics.some(diagnostic => diagnostic.message.includes('SWIG control keyword constructs'))) {
-          diagnostics.push({
-            severity: vscode.DiagnosticSeverity.Error,
-            range: new vscode.Range(
-              new vscode.Position(index, 0),
-              new vscode.Position(index, line.length)
-            ),
-            message: `SWIG control keyword constructs (e.g., %include) must be declared before include blocks (%{ #include ... %}).`,
-            source: 'swig.tmLanguage.json'
-          });
-        }
+        diagnostics.push({
+          severity: vscode.DiagnosticSeverity.Error,
+          range: new vscode.Range(
+            new vscode.Position(index, 0),
+            new vscode.Position(index, line.length)
+          ),
+          message: `SWIG control keyword constructs (e.g., %include) must be declared before include blocks (%{ #include ... %}).`,
+          source: 'swig.tmLanguage.json'
+        });
       }
     }
 
@@ -147,6 +144,10 @@ export function validateTextDocument(document: TextDocument): vscode.Diagnostic[
       return;
     }
     
+    // Skip if the first word in the line starts with $ or %
+    if (/^\s*[$%]/.test(line)) {
+      return;
+    }
     const undefinedTypeMatch = line.match(/\b(\w+)\b/);
     if (
       undefinedTypeMatch &&
